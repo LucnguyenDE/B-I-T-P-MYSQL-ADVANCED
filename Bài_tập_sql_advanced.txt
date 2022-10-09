@@ -1,0 +1,163 @@
+--TẠO TABLE
+-- users
+CREATE TABLE users (
+id INT PRIMARY KEY AUTO_INCREMENT,
+user_name VARCHAR(255),
+created_at DATE
+)
+
+--photos
+CREATE TABLE photos (
+id INT PRIMARY KEY AUTO_INCREMENT,
+image_url VARCHAR(255),
+created_at DATE,
+user_id INT,
+FOREIGN KEY (user_id) REFERENCES users(id)
+)
+
+--comments
+CREATE TABLE comments (
+id INT AUTO_INCREMENT,
+comment_text VARCHAR(255),
+created_at DATE,
+user_id INT,
+photo_id INT,
+PRIMARY KEY (id,user_id,photo_id),
+FOREIGN KEY (user_id) REFERENCES users(id),
+FOREIGN KEY (photo_id) REFERENCES photos(id)
+)
+
+--likes
+CREATE TABLE likes (
+user_id INT,
+photo_id INT,
+created_at DATE,
+PRIMARY KEY (user_id,photo_id),
+FOREIGN KEY (user_id) REFERENCES users(id),
+FOREIGN KEY (photo_id) REFERENCES photos(id)
+)
+
+--photo_tags
+CREATE TABLE photo_tags (
+tag_id INT PRIMARY KEY AUTO_INCREMENT,
+photo_id INT,
+FOREIGN KEY (photo_id) REFERENCES photos(id)
+)
+
+--tags
+CREATE TABLE tags (
+id INT PRIMARY KEY,
+tag_name VARCHAR(255),
+created_at DATE,
+FOREIGN KEY (id) REFERENCES photo_tags(tag_id)
+)
+
+--follows 
+CREATE TABLE follows (
+follower_id INT,
+followee_id INT,
+created_at DATE,
+PRIMARY KEY (follower_id,followee_id),
+FOREIGN KEY (follower_id) REFERENCES users(id),
+FOREIGN KEY (followee_id) REFERENCES users(id)
+)
+
+--THÊM DỮ LIỆU
+--users
+INSERT INTO users VALUES (0,'JHON','2020-05-25'),(0,'Huynde','2018-02-12'),
+(0,'Fes','2022-01-02')
+
+--photos
+INSERT INTO photos VALUES (0,'http.ássss.png','1111-05-25',3),(0,'http.dásssd.png','2222-02-12',1),
+(0,'http.fássd.png','3333-01-02',5)
+
+--comments
+INSERT INTO comments VALUES (0,'good','123-05-25',1,2),(0,'bad','425-02-12',1,3),
+(0,'good','357-01-02',2,2)
+
+--likes
+INSERT INTO likes VALUES (2,1,'2000-05-25'),(1,3,'2002-02-12'),
+(1,1,'1999-01-02')
+
+--photo_tags
+INSERT INTO photo_tags VALUES (0,4),(0,5),(0,3)
+
+--tags 
+INSERT INTO tags VALUES (10,'adie','2000-05-25'),(11,'adfulen','2002-02-12'),
+(12,'adnc','1999-01-02')
+
+--followers
+INSERT INTO follows VALUES (1,2,'2000-01-22'),(2,1,'2001-01-22'),(1,3,'2010-01-22'),(2,3,'2003-01-22'),(3,2,'2002-01-22')
+
+--Answer
+--Câu 1--người dùng sử dụng ứng dụng lâu nhất
+
+SELECT  user_name AS người_sử_dụng, created_at AS năm_sử_dụng_lâu_nhất
+FROM users 
+ORDER BY created_at
+LIMIT 1
+
+
+--Câu 2--Lấy ra ngày tạo tài khoản của 2 user đăng ký sớm nhất
+SELECT user_name, SUBSTRING(created_at,9,10) AS ngày_đăng_ký
+FROM users
+ORDER BY created_at
+LIMIT 2
+
+
+--Câu 3--người dùng không đăng ảnh
+
+SELECT id AS id, user_name AS tên_người_dùng_không_đăng_ảnh
+FROM users
+WHERE id NOT IN (SELECT user_id FROM photos)
+
+--Câu 4--xác định ảnh có nhiều like nhất và người dùng tạo ra nó
+
+SELECT PT.id as id_ảnh_có_nhiều_likes_nhất, URS.id as id_người_tạo, URS.user_name as tên_người_tạo
+FROM photos PT JOIN users URS
+ON PT.user_id = URS.id
+WHERE PT.id = (
+SELECT photo_id 
+FROM likes LKS
+GROUP BY photo_id
+HAVING COUNT(LKS.user_id) = (
+SELECT MAX(so_luong_buc_anh)
+FROM (
+SELECT photo_id, COUNT(LKS.user_id) as so_luong_buc_anh
+FROM likes LKS
+GROUP BY photo_id
+) AS _so_luong_anh_nhieu_nhat)
+)
+
+--Câu 5: tìm số lượng ảnh trung bình cho mỗi user
+
+SELECT user_id , COUNT(user_id) AS number_of_photo
+FROM photos 
+GROUP BY user_id
+
+--Câu 6: tìm 5 người được hagstag nhiều nhất
+
+
+SELECT users.id as id_user , user_name, photo_id AS id_photo, số_lượng_được_tags AS tags
+FROM users  JOIN photos
+ON users.id = photos.user_id
+JOIN (
+SELECT photo_id, COUNT(photo_id) AS số_lượng_được_tags
+FROM photo_tags
+GROUP BY photo_id
+ORDER BY COUNT(photo_id) DESC
+LIMIT 5
+) AS photossss
+ON photos.id = photossss.photo_id
+
+
+--Câu 7: tìm những người dùng đã thích một bức ảnh
+SELECT user_id AS người_dùng, COUNT(photo_id) AS số_lượng_ảnh_likes
+FROM likes
+GROUP BY user_id
+
+
+
+
+
+
